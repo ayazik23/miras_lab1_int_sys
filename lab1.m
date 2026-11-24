@@ -1,11 +1,26 @@
 clear;
 clc;
 
-Data = readmatrix('Data.txt');
+A1 = imread('apple_04.jpg');
+A2 = imread('apple_05.jpg');
+A3 = imread('apple_06.jpg');
 
-x1 = Data(:,1)';
-x2 = Data(:,2)';
-d = Data(:,3)'; 
+P1 = imread('pear_01.jpg');
+P2 = imread('pear_02.jpg');
+
+x1 = [spalva_color(A1), ...
+      spalva_color(A2), ...
+      spalva_color(A3), ...
+      spalva_color(P1), ...
+      spalva_color(P2)];
+
+x2 = [apvalumas_roundness(A1), ...
+      apvalumas_roundness(A2), ...
+      apvalumas_roundness(A3), ...
+      apvalumas_roundness(P1), ...
+      apvalumas_roundness(P2)];
+
+d = [1 1 1 -1 -1];
 
 w1 = randn(1);
 w2 = randn(1);
@@ -34,9 +49,22 @@ for epoch = 1:1000
 
     end
 
-    output = 2*double(x1*w1 + x2*w2 + b > 0) - 1;
 
-    total_error = sum(abs(d - output));
+    total_error = 0;
+
+    for i = 1:N
+
+        v = x1(i)*w1 + x2(i)*w2 + b;
+
+        if v > 0
+            y = 1;
+        else
+            y = -1;
+        end
+
+        total_error = total_error + abs(d(i) - y);
+
+    end
 
     if total_error == 0
         break;
@@ -47,13 +75,22 @@ end
 fprintf('Epochs: %d\n', epoch);
 fprintf('Training error: %d\n', total_error);
 
-files = [dir('apple_*.jpg'); dir('pear_*.jpg')];
+files = {'apple_07.jpg', ...
+         'apple_11.jpg', ...
+         'apple_12.jpg', ...
+         'apple_13.jpg', ...
+         'apple_17.jpg', ...
+         'apple_19.jpg', ...
+         'pear_03.jpg', ...
+         'pear_09.jpg'};
+
+expected = [1 1 1 1 1 1 -1 -1];
 
 correct = 0;
 
 for i = 1:length(files)
 
-    img = imread(files(i).name);
+    img = imread(files{i});
 
     c1 = spalva_color(img);
     c2 = apvalumas_roundness(img);
@@ -68,17 +105,14 @@ for i = 1:length(files)
         y = -1;
     end
 
-    if startsWith(files(i).name, 'apple_')
-        expected = 1;
-    else
-        expected = -1;
+    if y == expected(i)
+        correct = correct + 1;
     end
 
-    correct = correct + (y == expected);
-
-    fprintf('%s: %s\n', files(i).name, result);
+    fprintf('%s: %s\n', files{i}, result);
 
 end
 
-fprintf('Image accuracy: %.2f%%\n', ...
-    100*correct/length(files));
+accuracy = 100*correct/length(files);
+
+fprintf('Testing accuracy: %.2f%%\n', accuracy);
